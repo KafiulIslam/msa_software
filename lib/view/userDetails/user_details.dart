@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import 'package:msa_software/controller/constant/constant_widget.dart';
 import '../../controller/api/user_info_api.dart';
 import '../../controller/constant/color.dart';
 import '../../controller/constant/typography.dart';
@@ -6,21 +8,20 @@ import '../../controller/constant/typography.dart';
 class UserDetails extends StatefulWidget {
   final int? userId;
 
-  const UserDetails(
-      {Key? key, this.userId})
-      : super(key: key);
+  const UserDetails({Key? key, this.userId}) : super(key: key);
 
   @override
   State<UserDetails> createState() => _UserDetailsState();
 }
 
 class _UserDetailsState extends State<UserDetails> {
-
   late String name = '';
   late String email = '';
   late String phone = '';
   late String web = '';
   late String company = '';
+  late String street = '';
+  late String city = '';
 
   Future<void> loadUserDetails() async {
     final countryData = await getUserDetails(widget.userId!);
@@ -30,23 +31,14 @@ class _UserDetailsState extends State<UserDetails> {
       phone = countryData['data']['phone'] ?? '';
       web = countryData['data']['website'] ?? '';
       company = countryData['data']['company']['name'] ?? '';
+      street = countryData['data']['address']['street'] ?? '';
+      city = countryData['data']['address']['city'] ?? '';
     });
-    print('name is 1 %%% $name');
-    print('name is 2 %%% $email');
-    print('name is 3 %%% $phone');
-    print('name is 4 %%% $web');
-    print('name is 5 %%% $company');
-//     countryData['data'].forEach((element) {
-//        name = element['name'] ?? '';
-//        email = element['email'] ?? '';
-//        phone = element['phone'] ?? '';
-//        web = element['website'] ?? '';
-//        company = element['company']['name'] ?? '';
-// print('kdjoiewj ****  1 $name, 2 $email 3 $phone 4 $web 5 $company');
-//       // setState(() {
-//       //   userList.add(UserInfoCard(userName: name,email: email,phone: phone,city: city,));
-//       // });
-//     });
+  }
+
+  _phoneCall(String phone) async{
+   //  String numbool?= phone; //set the number here
+    bool? res = await FlutterPhoneDirectCaller.callNumber(phone);
   }
 
   @override
@@ -57,6 +49,7 @@ class _UserDetailsState extends State<UserDetails> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
         appBar: AppBar(
           title: const Text(
@@ -66,29 +59,86 @@ class _UserDetailsState extends State<UserDetails> {
           centerTitle: true,
           backgroundColor: primaryColor,
         ),
-        body: Column(
-          children: [
-            TextButton(onPressed: (){loadUserDetails();}, child: Text('trila'))
-          ],
+        body: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  _profile(name, '$street, $city'),
+                  SizedBox(height: screenHeight / 16,),
+                  _infoTile(Icons.email, 'Email',email, (){
+                    print('email');}),
+                  _infoTile(Icons.phone, 'Phone',phone, (){_phoneCall(phone);}),
+                  _infoTile(Icons.web, 'Website',web,null),
+                  _infoTile(Icons.business, 'Company Name',company,null),
+                ],
+              ),
+            ),
+          ),
         ));
   }
 
-  Widget _infoTile(
-    String title,
-    String info,
-  ) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _profile(String name, String address) {
+    return Column(
       children: [
-        Text(
-          title,
-          style: sixteenBlackStyle,
+        const CircleAvatar(
+          radius: 52,
+          backgroundColor: lightBlue,
+          child: CircleAvatar(
+            backgroundColor: assColor,
+            radius: 50,
+            child: Icon(
+              Icons.person,
+              color: iconColor,
+              size: 40,
+            ),
+          ),
         ),
+        eightVerticalSpace,
+        Text(name, style: sixteenBlackStyle),
         Text(
-          info,
-          style: sixteenBlackStyle,
-        ),
+          address,
+          style: fourteenBlackStyle,
+        )
       ],
     );
   }
+
+ Widget _infoTile(IconData icon, String title, String info, VoidCallback? onTap ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        margin: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0,vertical: 12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                backgroundColor: lightBlue,
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: primaryColor,
+                ),
+              ),
+              primarySpacerHorizontal,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,style: fourteenDeepAssStyle,),
+               const SizedBox(height: 3,),
+                Text(info,style: sixteenBlackStyle,),
+              ],),
+            ],
+          ),
+        ),
+      ),
+    );
+ }
+
 }
