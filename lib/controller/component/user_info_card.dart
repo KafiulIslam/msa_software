@@ -34,8 +34,8 @@ Widget  _infoTile(String title,String info,) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-          Text(title,style: sixteenBlackStyle,),
-          Text(info,style: sixteenBlackStyle,),
+          Text(title,style: sixteenDeepAssStyle,),
+          Text(info,style: sixteenDeepAssStyle,),
       ],);
 }
 
