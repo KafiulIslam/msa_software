@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:msa_software/controller/constant/color.dart';
 import 'package:msa_software/controller/constant/constant_widget.dart';
 import '../../view/userDetails/user_details.dart';
 import '../constant/typography.dart';
@@ -15,8 +16,13 @@ class UserInfoCard extends StatelessWidget {
       onTap: (){
         Navigator.push(context,MaterialPageRoute(builder: (_)=> UserDetails(userId: userId!)));
       },
-      child: Card(child: Padding(
-        padding: const EdgeInsets.all(8.0),
+      child: Card(
+        color: lightBlue,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Padding(
+        padding: const EdgeInsets.all(12.0),
         child: Column(children: [
           _infoTile('Name',userName!),
           eightVerticalSpace,

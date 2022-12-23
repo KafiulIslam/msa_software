@@ -1,50 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:msa_software/controller/constant/constant_widget.dart';
+import '../../controller/api/dio.dart';
 import '../../controller/api/user_info_api.dart';
+import '../../controller/component/loader.dart';
 import '../../controller/constant/color.dart';
 import '../../controller/constant/typography.dart';
+import 'bloc/user_details_bloc.dart';
 
-class UserDetails extends StatefulWidget {
+class UserDetails extends StatelessWidget {
   final int? userId;
 
   const UserDetails({Key? key, this.userId}) : super(key: key);
 
-  @override
-  State<UserDetails> createState() => _UserDetailsState();
-}
-
-class _UserDetailsState extends State<UserDetails> {
-  late String name = '';
-  late String email = '';
-  late String phone = '';
-  late String web = '';
-  late String company = '';
-  late String street = '';
-  late String city = '';
-
-  Future<void> loadUserDetails() async {
-    final countryData = await getUserDetails(widget.userId!);
-    setState(() {
-      name = countryData['data']['name'] ?? '';
-      email = countryData['data']['email'] ?? '';
-      phone = countryData['data']['phone'] ?? '';
-      web = countryData['data']['website'] ?? '';
-      company = countryData['data']['company']['name'] ?? '';
-      street = countryData['data']['address']['street'] ?? '';
-      city = countryData['data']['address']['city'] ?? '';
-    });
-  }
-
   _phoneCall(String phone) async {
     bool? res = await FlutterPhoneDirectCaller.callNumber(phone);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    loadUserDetails();
   }
 
   @override
@@ -59,33 +31,49 @@ class _UserDetailsState extends State<UserDetails> {
           centerTitle: true,
           backgroundColor: primaryColor,
         ),
-        body: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  _profile(name, '$street, $city'),
-                  SizedBox(
-                    height: screenHeight / 16,
+        body: BlocProvider(
+          create: (_) => UserDetailsBloc(dio: dio)..add(UserDetailFetched(userId: userId!)),
+          child: BlocBuilder<UserDetailsBloc, UserDetailsState>(
+            builder: (context, state) {
+              if(state.status == UserDetailStatus.failure){
+                return const Center(child: Text('Failed to load user information'));
+              }else if (state.status == UserDetailStatus.success){
+                final data = state.userData ;
+                return Center(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          _profile(data.name, '${data.street}, ${data.city}'),
+                          SizedBox(
+                            height: screenHeight / 16,
+                          ),
+                          _infoTile(Icons.email, 'Email', data.email, () async {
+                            await FlutterEmailSender.send(Email(
+                              body: 'Hi ${data.name},\nHappy New Year',
+                              subject: 'Greetings!',
+                              recipients: [data.email],
+                            ));
+                          }),
+                          _infoTile(Icons.phone, 'Phone', data.phone, () {
+                          _phoneCall(data.phone);
+                          }),
+                          _infoTile(Icons.web, 'Website', data.web, null),
+                          _infoTile(Icons.business, 'Company Name', data.company, null),
+                        ],
+                      ),
+                    ),
                   ),
-                  _infoTile(Icons.email, 'Email', email, () async {
-                    await FlutterEmailSender.send(Email(
-                      body: 'Hi $name,\nHappy New Year',
-                      subject: 'Greetings!',
-                      recipients: [email],
-                    ));
-                  }),
-                  _infoTile(Icons.phone, 'Phone', phone, () {
-                    _phoneCall(phone);
-                  }),
-                  _infoTile(Icons.web, 'Website', web, null),
-                  _infoTile(Icons.business, 'Company Name', company, null),
-                ],
-              ),
-            ),
+                );
+              }else{
+                return const Loader();
+              }
+            },
           ),
-        ));
+        )
+
+        );
   }
 
   Widget _profile(String name, String address) {
