@@ -3,12 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:msa_software/controller/constant/constant_widget.dart';
+import '../../bloc/user/user_bloc.dart';
 import '../../controller/api/dio.dart';
-import '../../controller/api/user_info_api.dart';
-import '../../controller/component/loader.dart';
+import '../../widgets/components/loader.dart';
 import '../../controller/constant/color.dart';
 import '../../controller/constant/typography.dart';
-import 'bloc/user_details_bloc.dart';
 
 class UserDetails extends StatelessWidget {
   final int? userId;
@@ -32,11 +31,11 @@ class UserDetails extends StatelessWidget {
           backgroundColor: primaryColor,
         ),
         body: BlocProvider(
-          create: (_) => UserDetailsBloc(dio: dio)..add(UserDetailFetched(userId: userId!)),
-          child: BlocBuilder<UserDetailsBloc, UserDetailsState>(
+          create: (_) => UserDetailBloc(dio: dio)..add(UserDetailFetched(userId: userId!)),
+          child: BlocBuilder<UserDetailBloc, UserDetailState>(
             builder: (context, state) {
-              if(state.status == UserDetailStatus.failure){
-                return const Center(child: Text('Failed to load user information'));
+              if(state.status == UserDetailStatus.initial){
+                return const Loader();
               }else if (state.status == UserDetailStatus.success){
                 final data = state.userData ;
                 return Center(
@@ -67,7 +66,7 @@ class UserDetails extends StatelessWidget {
                   ),
                 );
               }else{
-                return const Loader();
+                return Center(child: Text(state.statusMessage));
               }
             },
           ),
